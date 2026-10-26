@@ -4,6 +4,7 @@ from typing import Iterable, List
 from backend.logger import GLOBAL_LOGGER as log
 from backend.exception.custom_exception import CustomException
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
+from fastapi import UploadFile
 import re
 import uuid
 
@@ -62,3 +63,13 @@ def load_documents(paths: Iterable[Path]):
         docs.extend(loader.load())
     log.info("Document successfully loaded", count=len(docs))
     return docs
+
+
+class FastAPIFileAdapter:
+    def __init__(self, uf: UploadFile):
+        self.uf = uf
+        self.name = uf.filename
+
+    def getbuffer(self):
+        self.uf.file.seek(0)
+        return self.uf.file.read()

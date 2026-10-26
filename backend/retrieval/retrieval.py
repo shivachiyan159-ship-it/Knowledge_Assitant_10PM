@@ -24,10 +24,12 @@ class ConversationalRAG:
             log.info("building lcel chain")
             self.chain = None
             if self.retriever is not None:
-                pass
+                self._build_lcel_chain()
+                log.info("completed lcel chain")
 
         except Exception as e:
-            pass
+            log.error("retrieval initialization failed", error=str(e))
+            raise CustomException("retrieval initialization failed", sys)
 
     def __load_qdrant_retriever(self):
         try:
@@ -92,5 +94,20 @@ class ConversationalRAG:
             raise CustomException(
                 "failed to build LCEL cjain in ConverstaionalRAG")
 
-    def chat(self):
-        pass
+    def chat(self, user_input, chat_history):
+        try:
+            if self.chain is None:
+                raise ValueError("Rag chain not initlized")
+            chat_history = chat_history or []
+            payload = {"input": user_input, "chat_history": chat_history}
+            answer = self.chain.invoke(payload)
+            if not answer:
+                log.warning("No answer generated", user_input=user_input)
+                return "no answer generated"
+
+            log.info("chain invoked successfully and generated answer",
+                     user_input=user_input)
+            return answer
+        except Exception as e:
+            log.error("failed to invoke Conversation RAG", error=str(e))
+            raise CustomException("failed to invoke Conversation RAG ", sys)
