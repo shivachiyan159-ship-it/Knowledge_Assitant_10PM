@@ -7,13 +7,17 @@ from backend.exception.custom_exception import CustomException
 from langchain_qdrant import QdrantVectorStore
 from langchain_core.output_parsers import StrOutputParser
 from backend.prompts.prompt import PROMPT_REGISTRY
+from langchain_core.prompts import ChatPromptTemplate
+from dotenv import load_dotenv
 import sys
+import os
 
 
 class ConversationalRAG:
     def __init__(self):
         try:
             # build retrieval
+            load_dotenv()
             self.embed_model = ModelLoader().load_embedding()
             self.config = load_config()
             self.llm = self.__load_llm()
@@ -24,7 +28,7 @@ class ConversationalRAG:
             log.info("building lcel chain")
             self.chain = None
             if self.retriever is not None:
-                self._build_lcel_chain()
+                self.__build_lcel_chain()
                 log.info("completed lcel chain")
 
         except Exception as e:
@@ -35,8 +39,10 @@ class ConversationalRAG:
         try:
             vectorstore = QdrantVectorStore.from_existing_collection(
                 embedding=self.embed_model,
-                path="qdranttdb",
-                collection_name="knowledge_assitant"
+                url=os.getenv("QDRANT_URL"),
+                api_key=os.getenv("QDRANT_API_KEY"),
+                collection_name="knowledge_assistant",
+                timeout=120
             )
 
             topk = self.config["retriever"]["top_k"]
@@ -60,8 +66,9 @@ class ConversationalRAG:
     def __build_lcel_chain(self):
         try:
             # 1. rewrite user question with chathistory context
-            question_rewriter = context_question_prompt = PROMPT_REGISTRY["contextualize_question"]
-            (
+            context_question_prompt: ChatPromptTemplate = PROMPT_REGISTRY["contextualize_question"]
+
+            question_rewriter = (
                 {"input": itemgetter(
                     "input"), "chat_history": itemgetter("chat_history")}
                 | context_question_prompt

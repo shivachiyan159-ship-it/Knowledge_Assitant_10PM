@@ -49,14 +49,14 @@ class CustomException(Exception):
             """
 
 
-try:
-    a = 2/0
-    # we can call apis
-    # we can read files
+# try:
+#     a = 2/0
+#     # we can call apis
+#     # we can read files
 
-except Exception as e:
-    # print(e)
-    log.error(CustomException("zero divison error", sys.exc_info()))
+# except Exception as e:
+#     # print(e)
+#     log.error(CustomException("zero divison error", sys.exc_info()))
 
 # if __name__ == "__main__":
 #     try:
